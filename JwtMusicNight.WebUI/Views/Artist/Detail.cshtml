@@ -1,0 +1,76 @@
+@model ResultArtistDetailDto
+@{
+    ViewData["Title"] = Model.ArtistName;
+    // hero'daki büyük Play: sanatçının en çok dinlenen şarkısı
+    var topSong = Model.Songs.OrderByDescending(s => s.ListenCount).FirstOrDefault();
+}
+
+<section class="mn-hero">
+    <div class="mn-hero-bg" style="background-image:url(@Model.CoverImageUrl)"></div>
+    <div class="mn-hero-inner">
+        <img src="@Model.ArtistImageUrl" class="mn-hero-cover circle" alt="@Model.ArtistName" style="object-fit:cover" />
+        <div>
+            <div class="eyebrow">
+                @if (Model.IsVerified) { <span class="mn-verified">✓</span> <span>Doğrulanmış sanatçı</span> }
+                else { <span>Sanatçı</span> }
+            </div>
+            <h1>@Model.ArtistName</h1>
+            <div class="mn-meta">
+                <span>@Model.Country</span>
+                <span class="dot">•</span><span>@Model.SongCount şarkı</span>
+                <span class="dot">•</span><span>🎧 @Model.TotalListenCount.ToString("N0") toplam dinlenme</span>
+            </div>
+            @if (topSong != null)
+            {
+                @* data-id: oynatıcı bu öğeyi şarkı olarak tanır *@
+                <div class="mn-actions" data-id="@topSong.SongId" data-package="@topSong.RequiredPackage" data-source="">
+                    <span class="media-content d-none" style="background-image:url(@topSong.CoverImageUrl)"></span>
+                    <button class="btn btn-raised btn-icon btn-rounded btn-play mn-play-lg" aria-label="@topSong.SongName çal"></button>
+                    <div>
+                        <div class="text-muted" style="font-size:12.5px">En popüler şarkı</div>
+                        <a asp-controller="Music" asp-action="Detail" asp-route-id="@topSong.SongId" class="title ajax text-white font-weight-bold">@topSong.SongName</a>
+                        <span class="subtitle d-none">@Model.ArtistName</span>
+                    </div>
+                    <span class="mn-pill pkg-@topSong.RequiredPackage">@topSong.RequiredPackage</span>
+                    @if (!PackageHelper.CanListen(User, topSong.RequiredPackage))
+                    {
+                        <span class="mn-note">🔒 @topSong.RequiredPackage paketi gerekli</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<div class="mn-wrap">
+    <div class="mn-two">
+        <section class="mn-section">
+            <div class="mn-section-head">
+                <div>
+                    <div class="eyebrow">Tüm şarkılar</div>
+                    <h3>Şarkılar</h3>
+                </div>
+            </div>
+            <div class="mn-tracks">
+                @for (var i = 0; i < Model.Songs.Count; i++)
+                {
+                    <partial name="_SongRow" model="Model.Songs[i]" view-data='new ViewDataDictionary(ViewData) { ["Rank"] = i + 1 }' />
+                }
+            </div>
+        </section>
+
+        <aside class="mn-sticky">
+            <section class="mn-section">
+                <div class="mn-section-head"><h3>Hakkında</h3></div>
+                <p class="text-muted" style="line-height:1.75">@Model.Bio</p>
+                <div class="d-flex flex-wrap" style="gap:10px">
+                    <span class="mn-chip">📍 @Model.Country</span>
+                    <span class="mn-chip">🎵 @Model.SongCount şarkı</span>
+                </div>
+            </section>
+            <div class="mt-4">
+                <partial name="_PromoCard" model='Model.CoverImageUrl ?? ""' />
+            </div>
+        </aside>
+    </div>
+</div>

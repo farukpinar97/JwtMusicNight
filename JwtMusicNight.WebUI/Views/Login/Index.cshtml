@@ -1,0 +1,37 @@
+@model LoginDto
+@{
+    ViewData["Title"] = "Giriş Yap";
+    Layout = "_AuthLayout";
+}
+
+<h1>Tekrar hoş geldin</h1>
+<p class="lead-sm">Dinlemeye kaldığın yerden devam et.</p>
+
+@if (TempData["Success"] != null)
+{
+    <div class="mn-alert success">@TempData["Success"]</div>
+}
+
+<form asp-action="Index" asp-route-returnUrl="@Context.Request.Query["ReturnUrl"]" method="post">
+    <div asp-validation-summary="ModelOnly" class="mn-alert error" role="alert"></div>
+
+    <div class="mn-field">
+        <label asp-for="Username">Kullanıcı adı</label>
+        <input asp-for="Username" class="mn-input" placeholder="kullaniciadi" autocomplete="username" autofocus />
+        <span asp-validation-for="Username" class="field-error"></span>
+    </div>
+    <div class="mn-field">
+        <label asp-for="Password">Şifre</label>
+        <input asp-for="Password" type="password" class="mn-input" placeholder="••••••••" autocomplete="current-password" />
+        <span asp-validation-for="Password" class="field-error"></span>
+    </div>
+
+    <button type="submit" class="mn-submit">Giriş Yap</button>
+</form>
+
+<div class="mn-switch-link">Hesabın yok mu? <a asp-action="Register">Kayıt ol</a></div>
+
+<div class="mn-demo">
+    <b class="text-white">Demo hesaplar</b> (şifre: <code>Password123*</code>)<br />
+    <code>basicuser</code> <code>golduser</code> <code>premiumuser</code> <code>elituser</code>
+</div>

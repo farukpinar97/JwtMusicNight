@@ -1,0 +1,137 @@
+@model MusicIndexViewModel
+@{
+    ViewData["Title"] = "Keşfet";
+    var givenName = User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
+    var userPackage = PackageHelper.UserPackage(User);
+    var featured = Model.Featured.Any() ? Model.Featured : Model.Songs.Take(3).ToList();
+}
+
+@* ============ HERO SLIDER: en çok dinlenen 3 şarkı ============ *@
+@if (featured.Any())
+{
+    <div class="mn-slider">
+        @for (var i = 0; i < featured.Count; i++)
+        {
+            var s = featured[i];
+            var canListen = PackageHelper.CanListen(User, s.RequiredPackage);
+            <div class="mn-slide @(i == 0 ? "active" : "")">
+                <section class="mn-hero">
+                    <div class="mn-hero-bg" style="background-image:url(@(s.ArtistCoverImageUrl ?? s.CoverImageUrl))"></div>
+                    <div class="mn-hero-inner" data-id="@s.SongId" data-package="@s.RequiredPackage" data-source="">
+                        <a asp-controller="Music" asp-action="Detail" asp-route-id="@s.SongId"
+                           class="mn-hero-cover media-content ajax d-none d-md-block" style="background-image:url(@s.CoverImageUrl)"></a>
+                        <div>
+                            <div class="eyebrow">🔥 En çok dinlenen #@(i + 1)</div>
+                            <h1><a asp-controller="Music" asp-action="Detail" asp-route-id="@s.SongId" class="title ajax text-white">@s.SongName</a></h1>
+                            <div class="mn-meta">
+                                @if (!string.IsNullOrEmpty(s.ArtistImageUrl))
+                                {
+                                    <img src="@s.ArtistImageUrl" class="avatar-sm" alt="" />
+                                }
+                                <a asp-controller="Artist" asp-action="Detail" asp-route-id="@s.ArtistId" class="subtitle ajax">@s.ArtistName</a>
+                                <span class="dot">•</span><span>@s.GenreName</span>
+                                <span class="dot">•</span><span>@s.ReleaseDate.Year</span>
+                            </div>
+                            <div class="mn-actions">
+                                <button class="btn btn-raised btn-icon btn-rounded btn-play mn-play-lg" aria-label="@s.SongName çal"></button>
+                                <span class="mn-stat"><i data-feather="headphones"></i> @s.ListenCount.ToString("N0") dinlenme</span>
+                                <span class="mn-pill pkg-@s.RequiredPackage">@s.RequiredPackage</span>
+                                @if (!canListen)
+                                {
+                                    <span class="mn-note">🔒 @s.RequiredPackage paketi gerekli</span>
+                                }
+                                <a asp-controller="Music" asp-action="Detail" asp-route-id="@s.SongId" class="mn-btn mn-btn-ghost ajax">Detay</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        }
+        <div class="mn-dots">
+            @for (var i = 0; i < featured.Count; i++)
+            {
+                <button type="button" class="@(i == 0 ? "active" : "")" aria-label="@(i + 1). slayt"></button>
+            }
+        </div>
+    </div>
+}
+
+<div class="mn-wrap">
+
+    <div class="mn-section">
+        <div class="mn-section-head">
+            <div>
+                <div class="eyebrow">Merhaba @givenName 👋 · <span class="mn-pill pkg-@userPackage">@userPackage</span> paketindesin</div>
+                <h2>Bugün ne dinlemek istersin?</h2>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ForYou.Songs.Any())
+    {
+        <section class="mn-section">
+            <div class="mn-section-head">
+                <div>
+                    <div class="eyebrow">
+                        @(Model.ForYou.Source == "ML.NET"
+                            ? "🤖 Dinleme alışkanlıklarına göre ML.NET önerisi"
+                            : "Henüz yeterli dinleme geçmişin yok — şimdilik en popülerler")
+                    </div>
+                    <h3>Bunları da Sevebilirsin</h3>
+                </div>
+                <div class="mn-scroll-nav" data-scroll-nav="row-foryou" hidden>
+                    <button type="button" class="mn-arrow" data-dir="-1" aria-label="Geri"><i data-feather="chevron-left"></i></button>
+                    <button type="button" class="mn-arrow" data-dir="1" aria-label="İleri"><i data-feather="chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="mn-scroll-wrap" id="row-foryou">
+            <div class="mn-scroll">
+                @foreach (var song in Model.ForYou.Songs)
+                {
+                    <partial name="_SongCard" model="song" />
+                }
+            </div>
+            </div>
+        </section>
+    }
+
+    @if (Model.History.Any())
+    {
+        <section class="mn-section">
+            <div class="mn-section-head">
+                <div>
+                    <div class="eyebrow">Geçmiş</div>
+                    <h3>Son Dinlediklerin</h3>
+                </div>
+                <div class="mn-scroll-nav" data-scroll-nav="row-history" hidden>
+                    <button type="button" class="mn-arrow" data-dir="-1" aria-label="Geri"><i data-feather="chevron-left"></i></button>
+                    <button type="button" class="mn-arrow" data-dir="1" aria-label="İleri"><i data-feather="chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="mn-scroll-wrap" id="row-history">
+            <div class="mn-scroll">
+                @foreach (var song in Model.History)
+                {
+                    <partial name="_SongCard" model="song" />
+                }
+            </div>
+            </div>
+        </section>
+    }
+
+    <section class="mn-section">
+        <div class="mn-section-head">
+            <div>
+                <div class="eyebrow">Tüm şarkılar · @Model.Songs.Count</div>
+                <h3>Keşfet</h3>
+            </div>
+            <a asp-controller="Chart" asp-action="Index" class="mn-link ajax">Top listeler →</a>
+        </div>
+        <div class="mn-grid">
+            @foreach (var song in Model.Songs)
+            {
+                <partial name="_SongCard" model="song" />
+            }
+        </div>
+    </section>
+</div>

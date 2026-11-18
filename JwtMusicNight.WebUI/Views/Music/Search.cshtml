@@ -1,0 +1,67 @@
+@model SearchViewModel
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.Query) ? "Ara" : $"\"{Model.Query}\" araması";
+    var hasQuery = Model.Query.Length >= 2;
+}
+
+<div class="mn-page">
+    <div class="mn-section-head">
+        <div>
+            <div class="eyebrow">Arama</div>
+            <h2>
+                @if (hasQuery) { <text>"@Model.Query" için sonuçlar</text> }
+                else { <text>Ne dinlemek istersin?</text> }
+            </h2>
+        </div>
+    </div>
+
+    <form asp-action="Search" method="get" class="mn-search-big js-search-form mb-4">
+        <i data-feather="search"></i>
+        <input name="q" value="@Model.Query" placeholder="Şarkı, sanatçı veya tür ara…" autocomplete="off" autofocus />
+    </form>
+
+    @if (!hasQuery)
+    {
+        <p class="text-muted">Aramak için en az 2 karakter yaz. Örnek: <a class="mn-link ajax" asp-action="Search" asp-route-q="pop">pop</a>, <a class="mn-link ajax" asp-action="Search" asp-route-q="dua">dua</a>, <a class="mn-link ajax" asp-action="Search" asp-route-q="rock">rock</a></p>
+    }
+    else if (!Model.Songs.Any() && !Model.Artists.Any())
+    {
+        <div class="mn-empty">
+            <div class="icon">🔍</div>
+            <div class="title">"@Model.Query" ile eşleşen bir şey bulamadık</div>
+            <div class="text-muted">Farklı bir kelime dene ya da türlere göz at.</div>
+            <a asp-controller="Genre" asp-action="Index" class="mn-btn mn-btn-light ajax mt-3">Türlere göz at</a>
+        </div>
+    }
+    else
+    {
+        if (Model.Artists.Any())
+        {
+            <section class="mn-section">
+                <div class="mn-section-head"><h3>Sanatçılar <small class="text-muted" style="font-size:16px">(@Model.Artists.Count)</small></h3></div>
+                <div class="mn-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));">
+                    @foreach (var artist in Model.Artists)
+                    {
+                        <a asp-controller="Artist" asp-action="Detail" asp-route-id="@artist.ArtistId" class="mn-artist ajax">
+                            <div class="avatar"><img src="@artist.ArtistImageUrl" alt="@artist.ArtistName" /></div>
+                            <div class="name">@artist.ArtistName</div>
+                            <div class="sub">@artist.SongCount şarkı</div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+        if (Model.Songs.Any())
+        {
+            <section class="mn-section">
+                <div class="mn-section-head"><h3>Şarkılar <small class="text-muted" style="font-size:16px">(@Model.Songs.Count)</small></h3></div>
+                <div class="mn-grid">
+                    @foreach (var song in Model.Songs)
+                    {
+                        <partial name="_SongCard" model="song" />
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>

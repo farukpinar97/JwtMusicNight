@@ -1,0 +1,45 @@
+@model RegisterDto
+@{
+    ViewData["Title"] = "Kayıt Ol";
+    Layout = "_AuthLayout";
+}
+
+<h1>Hesap oluştur</h1>
+<p class="lead-sm">Ücretsiz katıl; hesabın <span class="mn-pill pkg-Basic">Basic</span> paketle başlar.</p>
+
+<form asp-action="Register" method="post">
+    <div asp-validation-summary="ModelOnly" class="mn-alert error" role="alert"></div>
+
+    <div class="form-row">
+        <div class="mn-field col-6">
+            <label asp-for="Name">Ad</label>
+            <input asp-for="Name" class="mn-input" autocomplete="given-name" />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </div>
+        <div class="mn-field col-6">
+            <label asp-for="Surname">Soyad</label>
+            <input asp-for="Surname" class="mn-input" autocomplete="family-name" />
+            <span asp-validation-for="Surname" class="field-error"></span>
+        </div>
+    </div>
+    <div class="mn-field">
+        <label asp-for="Username">Kullanıcı adı</label>
+        <input asp-for="Username" class="mn-input" autocomplete="username" />
+        <span asp-validation-for="Username" class="field-error"></span>
+    </div>
+    <div class="mn-field">
+        <label asp-for="Email">E-posta</label>
+        <input asp-for="Email" type="email" class="mn-input" autocomplete="email" />
+        <span asp-validation-for="Email" class="field-error"></span>
+    </div>
+    <div class="mn-field">
+        <label asp-for="Password">Şifre</label>
+        <input asp-for="Password" type="password" class="mn-input" autocomplete="new-password" />
+        <span asp-validation-for="Password" class="field-error"></span>
+        <small class="text-muted d-block mt-2">En az 6 karakter; büyük harf, küçük harf, rakam ve özel karakter.</small>
+    </div>
+
+    <button type="submit" class="mn-submit">Kayıt Ol</button>
+</form>
+
+<div class="mn-switch-link">Zaten hesabın var mı? <a asp-action="Index">Giriş yap</a></div>

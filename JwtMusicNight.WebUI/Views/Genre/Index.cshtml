@@ -1,0 +1,26 @@
+@model List<ResultGenreDto>
+@{
+    ViewData["Title"] = "Türler";
+}
+
+<div class="mn-page">
+    <div class="mn-section-head">
+        <div>
+            <div class="eyebrow">Kategoriler</div>
+            <h2>Türler</h2>
+        </div>
+    </div>
+
+    <div class="mn-tiles">
+        @foreach (var genre in Model)
+        {
+            <a asp-controller="Genre" asp-action="Detail" asp-route-id="@genre.GenreId" class="mn-tile ajax">
+                <div class="bg" style="background-image:url(@genre.ImageUrl)"></div>
+                <div>
+                    <div class="name">@genre.GenreName</div>
+                    <div class="sub">@genre.SongCount şarkı</div>
+                </div>
+            </a>
+        }
+    </div>
+</div>

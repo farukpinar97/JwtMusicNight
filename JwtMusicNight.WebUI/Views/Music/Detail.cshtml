@@ -1,0 +1,105 @@
+@model SongDetailViewModel
+@{
+    var song = Model.Song;
+    ViewData["Title"] = song.SongName;
+    var canListen = PackageHelper.CanListen(User, song.RequiredPackage);
+}
+
+@* ============ HERO ============ *@
+<section class="mn-hero">
+    <div class="mn-hero-bg" style="background-image:url(@(song.ArtistCoverImageUrl ?? song.CoverImageUrl))"></div>
+    <div class="mn-hero-inner" data-id="@song.SongId" data-package="@song.RequiredPackage" data-source="">
+        <div class="mn-hero-cover media-content" style="background-image:url(@song.CoverImageUrl)"></div>
+        <div>
+            <div class="eyebrow">Şarkı</div>
+            <h1 class="title">@song.SongName</h1>
+            <div class="mn-meta">
+                @if (!string.IsNullOrEmpty(song.ArtistImageUrl))
+                {
+                    <img src="@song.ArtistImageUrl" class="avatar-sm" alt="" />
+                }
+                <a asp-controller="Artist" asp-action="Detail" asp-route-id="@song.ArtistId" class="subtitle ajax">@song.ArtistName</a>
+                <span class="mn-verified" title="Doğrulanmış sanatçı">✓</span>
+                <span class="dot">•</span>
+                <a asp-controller="Genre" asp-action="Detail" asp-route-id="@song.GenreId" class="ajax">@song.GenreName</a>
+                <span class="dot">•</span><span>@song.ReleaseDate.Year</span>
+                <span class="dot">•</span><span>@song.Duration.ToString(@"m\:ss")</span>
+            </div>
+            <div class="mn-actions">
+                <button class="btn btn-raised btn-icon btn-rounded btn-play mn-play-lg" aria-label="@song.SongName çal"></button>
+                <span class="mn-stat"><i data-feather="headphones"></i> @song.ListenCount.ToString("N0")</span>
+                <span class="mn-pill pkg-@song.RequiredPackage">@song.RequiredPackage</span>
+                @if (!canListen)
+                {
+                    <span class="mn-note">🔒 Bu şarkı için en az @song.RequiredPackage paketi gerekli</span>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="mn-wrap">
+    <div class="mn-two">
+        <!-- SOL -->
+        <div>
+            <section class="mn-section">
+                <div class="mn-section-head">
+                    <div>
+                        <div class="eyebrow">Sanatçının diğer şarkıları</div>
+                        <h3>@song.ArtistName'dan Daha Fazla</h3>
+                    </div>
+                    <a asp-controller="Artist" asp-action="Detail" asp-route-id="@song.ArtistId" class="mn-link ajax">Sanatçı sayfası →</a>
+                </div>
+                @if (Model.ArtistSongs.Any())
+                {
+                    <div class="mn-tracks two-col">
+                        @foreach (var s in Model.ArtistSongs)
+                        {
+                            <partial name="_SongRow" model="s" />
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Bu sanatçının başka şarkısı yok.</p>
+                }
+            </section>
+
+            @if (!string.IsNullOrWhiteSpace(song.Lyrics))
+            {
+                <section class="mn-section">
+                    <div class="mn-section-head"><h3>Sözler</h3></div>
+                    <p class="text-muted" style="white-space:pre-line; line-height:1.8">@song.Lyrics</p>
+                </section>
+            }
+        </div>
+
+        <!-- SAĞ: ÖNERİLENLER -->
+        <aside class="mn-sticky">
+            <section class="mn-section">
+                <div class="mn-section-head">
+                    <div>
+                        <div class="eyebrow">Bu şarkıyı dinleyenler bunları da dinledi</div>
+                        <h3>Önerilenler</h3>
+                    </div>
+                </div>
+                @if (Model.Recommendations.Any())
+                {
+                    <div class="mn-tracks">
+                        @foreach (var s in Model.Recommendations)
+                        {
+                            <partial name="_SongRow" model="s" />
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Henüz öneri yok.</p>
+                }
+            </section>
+            <div class="mt-4">
+                <partial name="_PromoCard" model='Model.Recommendations.FirstOrDefault()?.ArtistCoverImageUrl ?? ""' />
+            </div>
+        </aside>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+@model AdminArtistDto
+@{
+    var isEdit = Model.ArtistId > 0;
+    ViewData["Title"] = isEdit ? "Sanatçı Düzenle" : "Yeni Sanatçı";
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <a asp-action="Index" class="text-muted"><i data-feather="arrow-left"></i> Sanatçılar</a>
+        <h2>@(isEdit ? Model.ArtistName : "Yeni Sanatçı")</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <h6>Sanatçı Bilgileri</h6>
+            <form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="admin-form">
+                <div asp-validation-summary="ModelOnly" class="info-note"></div>
+                <input type="hidden" asp-for="ArtistId" />
+
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label asp-for="ArtistName"></label>
+                        <input asp-for="ArtistName" class="form-control" />
+                        <span asp-validation-for="ArtistName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Country"></label>
+                        <input asp-for="Country" class="form-control" placeholder="Örn. Türkiye" />
+                    </div>
+                </div>
+
+                <partial name="_ImagePicker" model='("ArtistImageUrl", Model.ArtistImageUrl, "Profil görseli")' />
+                <partial name="_ImagePicker" model='("CoverImageUrl", Model.CoverImageUrl, "Kapak (banner) görseli")' />
+
+                <div class="form-group">
+                    <label asp-for="Bio"></label>
+                    <textarea asp-for="Bio" rows="4" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="admin-switch">
+                        <input asp-for="IsVerified" type="checkbox" />
+                        <span class="track"></span>
+                        Doğrulanmış sanatçı
+                    </label>
+                </div>
+
+                <div class="d-flex" style="gap:10px">
+                    <button type="submit" class="btn-admin btn-admin-primary" data-loading-text="Kaydediliyor…"><i data-feather="save"></i> @(isEdit ? "Değişiklikleri Kaydet" : "Sanatçıyı Oluştur")</button>
+                    <a asp-action="Index" class="btn-admin btn-admin-ghost">Vazgeç</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_FormScripts" /> }

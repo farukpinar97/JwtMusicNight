@@ -1,0 +1,26 @@
+@model ResultSongDto
+@{
+    var canListen = PackageHelper.CanListen(User, Model.RequiredPackage);
+    var rank = ViewData["Rank"] as int? ?? 0;
+}
+<div class="mn-track with-rank" data-id="@Model.SongId" data-package="@Model.RequiredPackage" data-source="">
+    <span class="rank" style="@(rank <= 3 ? "color:#fff" : "")">@rank</span>
+    <div class="thumb">
+        <span class="media-content" style="background-image:url(@Model.CoverImageUrl)"></span>
+        <button class="btn btn-raised btn-icon btn-rounded bg--white btn-play" aria-label="@Model.SongName çal"></button>
+    </div>
+    <div class="meta">
+        <a asp-controller="Music" asp-action="Detail" asp-route-id="@Model.SongId" class="title ajax">@Model.SongName</a>
+        <a asp-controller="Artist" asp-action="Detail" asp-route-id="@Model.ArtistId" class="subtitle ajax">@Model.ArtistName</a>
+    </div>
+    <div class="right">
+        <a asp-controller="Genre" asp-action="Detail" asp-route-id="@Model.GenreId" class="ajax text-muted d-none d-md-inline">@Model.GenreName</a>
+        <span class="d-none d-md-inline">🎧 @Model.ListenCount.ToString("N0")</span>
+        @if (!canListen)
+        {
+            <span title="Paketin bu şarkıyı desteklemiyor">🔒</span>
+        }
+        <span class="mn-pill pkg-@Model.RequiredPackage">@Model.RequiredPackage</span>
+        <span class="d-none d-sm-inline">@Model.Duration.ToString(@"m\:ss")</span>
+    </div>
+</div>

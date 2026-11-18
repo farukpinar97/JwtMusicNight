@@ -1,0 +1,32 @@
+@{
+    Layout = null;
+    var code = (int)(ViewData["Code"] ?? 404);
+    var (title, message) = code switch
+    {
+        404 => ("Bu sayfa susmuş gibi 🎧", "Aradığın sayfa ya da şarkı bulunamadı. Taşınmış ya da hiç var olmamış olabilir."),
+        403 => ("Bu alan sana kapalı", "Bu sayfayı görüntülemek için yetkin yok."),
+        _ => ("Bir şeyler ters gitti", "Beklenmeyen bir hata oluştu. Birazdan tekrar dene.")
+    };
+}
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+    <meta charset="utf-8" />
+    <title>@code | Music Night</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="~/assets/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/site-ui.css" asp-append-version="true" />
+</head>
+<body class="mn-body">
+    <div class="mn-error">
+        <div class="bg" style="background-image:url(/assets/img/b13.jpg)"></div>
+        <div class="code">@code</div>
+        <h1>@title</h1>
+        <p>@message</p>
+        <div class="d-flex justify-content-center flex-wrap" style="gap:12px">
+            <a href="/Music/Index" class="mn-btn mn-btn-light">Keşfet'e dön</a>
+            <a href="/Chart/Index" class="mn-btn mn-btn-ghost">Top listeler</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+@model List<AdminGenreDto>
+@{
+    ViewData["Title"] = "Türler";
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <div class="text-muted">Yönetim</div>
+        <h2>Türler <small>(@Model.Count)</small></h2>
+    </div>
+    <a asp-action="Create" class="btn-admin btn-admin-primary"><i data-feather="plus"></i> Yeni Tür</a>
+</div>
+
+<div class="admin-card">
+    <table class="admin-table">
+        <thead><tr><th>Tür</th><th class="text-center">Şarkı</th><th class="text-right">İşlem</th></tr></thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="3"><div class="empty-state"><i data-feather="tag"></i><div class="title">Henüz tür yok</div><div>"Yeni Tür" ile ilk kaydı ekleyin.</div></div></td></tr>
+            }
+            @foreach (var g in Model)
+            {
+                <tr>
+                    <td>
+                        <div class="media-cell">
+                            <img src="@g.ImageUrl" class="thumb" alt="" />
+                            <div class="cell-main">@g.GenreName</div>
+                        </div>
+                    </td>
+                    <td class="text-center">@g.SongCount</td>
+                    <td class="text-right">
+                        <div class="actions">
+                            <a asp-action="Edit" asp-route-id="@g.GenreId" class="icon-btn" title="Düzenle" aria-label="@g.GenreName düzenle"><i data-feather="edit-2"></i></a>
+                            <form asp-action="Delete" asp-route-id="@g.GenreId" method="post" data-confirm="&quot;@g.GenreName&quot; silinsin mi?">
+                                <button class="icon-btn icon-btn-danger" disabled="@(g.SongCount > 0)"
+                                        title="@(g.SongCount > 0 ? "Önce şarkıların türünü değiştirin" : "Sil")"><i data-feather="trash-2"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

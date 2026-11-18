@@ -1,0 +1,128 @@
+@model AccountViewModel
+@{
+    ViewData["Title"] = "Hesabım & Paketim";
+    var fullName = $"{User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value} {User.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value}".Trim();
+    var current = PackageHelper.UserPackage(User);
+    var currentLevel = PackageHelper.UserLevel(User);
+    var total = Model.Songs.Count;
+    var accessible = Model.Songs.Count(s => PackageHelper.ToLevel(s.RequiredPackage) <= currentLevel);
+    var locked = Model.Songs.Where(s => PackageHelper.ToLevel(s.RequiredPackage) > currentLevel).ToList();
+    var packages = new[]
+    {
+        ("Basic", 1, "Başlangıç için", new[] { "Basic şarkılar", "Öneriler ve listeler", "Dinleme geçmişi" }),
+        ("Gold", 2, "Daha fazla müzik", new[] { "Basic + Gold şarkılar", "Rock, Jazz ve Klasik", "Tüm Basic özellikleri" }),
+        ("Premium", 3, "Tutkunlar için", new[] { "Gold + Premium şarkılar", "Rap ve R&B arşivi", "Tüm Gold özellikleri" }),
+        ("Elit", 4, "Sınırsız erişim", new[] { "Tüm şarkılar", "Elit özel parçalar", "Tüm Premium özellikleri" })
+    };
+}
+
+<section class="mn-hero compact">
+    <div class="mn-hero-bg" style="background-image:url(/assets/img/auth-bg.jpg)"></div>
+    <div class="mn-hero-inner">
+        <img src="@AvatarHelper.For(User)" class="mn-hero-cover circle" alt="" style="object-fit:cover; background:transparent; border:0; box-shadow:0 24px 60px rgba(0,0,0,.45)" />
+        <div>
+            <div class="eyebrow">Hesabım</div>
+            <h1>@fullName</h1>
+            <div class="mn-meta">
+                <span>@@@(User.Identity?.Name)</span>
+                <span class="dot">•</span>
+                <span class="mn-pill pkg-@current">@current</span>
+                <span class="dot">•</span>
+                <span><b class="text-white">@accessible / @total</b> şarkıya erişimin var</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="mn-wrap">
+    <section class="mn-section">
+        <div class="mn-section-head">
+            <div>
+                <div class="eyebrow">Bir şarkıyı dinleyebilmen için paketinin o şarkının paketine eşit veya üstünde olması gerekir.</div>
+                <h3>Paketler</h3>
+            </div>
+        </div>
+        <div class="mn-plans">
+            @foreach (var (name, level, tagline, features) in packages)
+            {
+                var count = Model.Songs.Count(s => PackageHelper.ToLevel(s.RequiredPackage) <= level);
+                var isCurrent = level == currentLevel;
+                <div class="mn-plan plan-@name @(isCurrent ? "current" : "")">
+                    @if (isCurrent) { <span class="plan-flag">Mevcut paketin</span> }
+                    <span class="mn-pill pkg-@name">@name</span>
+                    <div class="plan-count">@count <small>/ @total şarkı</small></div>
+                    <div class="plan-tagline">@tagline</div>
+                    <ul>
+                        @foreach (var f in features) { <li>✓ @f</li> }
+                    </ul>
+                    @if (isCurrent)
+                    {
+                        <span class="mn-btn mn-btn-ghost w-100 disabled">Aktif</span>
+                    }
+                    else if (level < currentLevel)
+                    {
+                        <span class="mn-btn mn-btn-ghost w-100 disabled">Paketine dahil</span>
+                    }
+                    else
+                    {
+                        <span class="mn-btn mn-btn-ghost w-100" style="cursor:default" title="Paket yükseltmeleri yönetici panelinden yapılır">🔐 Yönetici ile yükseltilir</span>
+                    }
+                </div>
+            }
+        </div>
+        <p class="text-muted mt-3" style="font-size:13.5px">
+            ℹ️ Paket yükseltmeleri yönetici tarafından yapılır. Paketin değiştirildiyse yeni paketin <b>çıkış yapıp tekrar giriş yaptığında</b>
+            geçerli olur; çünkü paket bilgin giriş sırasında oluşturulan JWT'nin içinde taşınır.
+        </p>
+    </section>
+
+    @if (locked.Any())
+    {
+        <section class="mn-section">
+            <div class="mn-section-head">
+                <div>
+                    <div class="eyebrow">@locked.Count şarkı paketinin üstünde</div>
+                    <h3>🔒 Paketini yükseltince açılacaklar</h3>
+                </div>
+                <div class="mn-scroll-nav" data-scroll-nav="row-locked" hidden>
+                    <button type="button" class="mn-arrow" data-dir="-1" aria-label="Geri"><i data-feather="chevron-left"></i></button>
+                    <button type="button" class="mn-arrow" data-dir="1" aria-label="İleri"><i data-feather="chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="mn-scroll-wrap" id="row-locked">
+            <div class="mn-scroll">
+                @foreach (var song in locked)
+                {
+                    <partial name="_SongCard" model="song" />
+                }
+            </div>
+            </div>
+        </section>
+    }
+
+    <section class="mn-section">
+        <div class="mn-section-head">
+            <div>
+                <div class="eyebrow">Son dinlediğin şarkılar</div>
+                <h3>Dinleme Geçmişi</h3>
+            </div>
+        </div>
+        @if (Model.History.Any())
+        {
+            <div class="mn-tracks two-col">
+                @foreach (var song in Model.History)
+                {
+                    <partial name="_SongRow" model="song" />
+                }
+            </div>
+        }
+        else
+        {
+            <div class="mn-empty">
+                <div class="icon">🎧</div>
+                <div class="title">Henüz bir şey dinlemedin</div>
+                <a asp-controller="Music" asp-action="Index" class="mn-btn mn-btn-light ajax mt-3">Keşfetmeye başla</a>
+            </div>
+        }
+    </section>
+</div>

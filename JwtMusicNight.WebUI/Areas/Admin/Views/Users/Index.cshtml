@@ -1,0 +1,116 @@
+@model List<AdminUserDto>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+    string? search = ViewBag.Search;
+    string? package = ViewBag.Package;
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <div class="text-muted">Yönetim</div>
+        <h2>Kullanıcılar <small>(@Model.Count)</small></h2>
+    </div>
+</div>
+
+<div class="admin-card">
+    <form method="get" class="admin-form card-toolbar">
+        <div class="input-icon flex" style="min-width:240px">
+            <i data-feather="search"></i>
+            <input name="search" value="@search" class="form-control" placeholder="Kullanıcı adı, ad veya e-posta ara..." />
+        </div>
+        <select name="package" class="form-control" style="width:180px">
+            <option value="">Tüm paketler</option>
+            @foreach (var p in Packages.All)
+            {
+                if (p == package) { <option value="@p" selected>@p</option> }
+                else { <option value="@p">@p</option> }
+            }
+        </select>
+        <button class="btn-admin btn-admin-primary"><i data-feather="filter"></i> Filtrele</button>
+        @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(package))
+        {
+            <a asp-action="Index" class="btn-admin btn-admin-ghost">Temizle</a>
+        }
+    </form>
+
+    <div class="info-note">
+        <i data-feather="info"></i>
+        <div>Paket değişikliği kullanıcının <b>bir sonraki girişinde</b> geçerli olur. JWT stateless olduğu için mevcut token eski paket bilgisini süresi dolana kadar taşır.</div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Kullanıcı</th>
+                    <th>E-posta</th>
+                    <th class="text-center">Dinlenme</th>
+                    <th>Paket</th>
+                    <th style="width:250px">Paketi Değiştir</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5">
+                        <div class="empty-state">
+                            <i data-feather="user-x"></i>
+                            <div class="title">Kullanıcı bulunamadı</div>
+                            <div>Arama veya paket filtresini değiştirmeyi deneyin.</div>
+                        </div>
+                    </td></tr>
+                }
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="media-cell">
+                                <img src="@AvatarHelper.For(u.UserName)" class="thumb circle" alt="" />
+                                <div>
+                                    <div class="cell-main">
+                                        @u.Name @u.Surname
+                                        @if (u.IsAdmin) { <span class="role-pill">ADMIN</span> }
+                                    </div>
+                                    <div class="cell-sub">@@@u.UserName</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-muted">@u.Email</td>
+                        <td class="text-center">@u.ListenCount</td>
+                        <td><partial name="_PackagePill" model="u.PackageLevel" /></td>
+                        <td>
+                            <form asp-action="UpdatePackage" method="post" class="admin-form d-flex" style="gap:8px">
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <input type="hidden" name="search" value="@search" />
+                                <input type="hidden" name="package" value="@package" />
+                                <select name="packageLevel" class="form-control form-control-sm js-package-select" data-original="@u.PackageLevel" aria-label="@u.UserName paketi">
+                                    @foreach (var p in Packages.All)
+                                    {
+                                        if (p == u.PackageLevel) { <option value="@p" selected>@p</option> }
+                                        else { <option value="@p">@p</option> }
+                                    }
+                                </select>
+                                <button class="btn-admin btn-admin-primary btn-admin-sm js-package-save" title="Kaydet" aria-label="Paketi kaydet" data-loading-text="" disabled><i data-feather="check"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // paket değişmeden Kaydet butonu pasif; değişen satır vurgulanır
+        document.querySelectorAll('.js-package-select').forEach(function (select) {
+            var row = select.closest('tr');
+            var btn = row.querySelector('.js-package-save');
+            select.addEventListener('change', function () {
+                var dirty = select.value !== select.getAttribute('data-original');
+                btn.disabled = !dirty;
+                row.classList.toggle('row-dirty', dirty);
+            });
+        });
+    </script>
+}

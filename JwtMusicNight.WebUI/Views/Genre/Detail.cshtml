@@ -1,0 +1,41 @@
+@model GenreDetailViewModel
+@{
+    ViewData["Title"] = Model.Genre.GenreName;
+    var heroBg = Model.Songs.FirstOrDefault()?.ArtistCoverImageUrl ?? Model.Genre.ImageUrl;
+}
+
+<section class="mn-hero compact">
+    <div class="mn-hero-bg" style="background-image:url(@heroBg)"></div>
+    <div class="mn-hero-inner">
+        <div class="mn-hero-cover d-none d-md-block" style="background-image:url(@Model.Genre.ImageUrl)"></div>
+        <div>
+            <div class="eyebrow">Tür</div>
+            <h1>@Model.Genre.GenreName</h1>
+            <div class="mn-meta"><span>@Model.Genre.SongCount şarkı</span></div>
+        </div>
+    </div>
+</section>
+
+<div class="mn-wrap">
+    <div class="mn-chips mb-4">
+        @foreach (var g in Model.AllGenres)
+        {
+            <a asp-controller="Genre" asp-action="Detail" asp-route-id="@g.GenreId"
+               class="mn-chip ajax @(g.GenreId == Model.Genre.GenreId ? "active" : "")">@g.GenreName</a>
+        }
+    </div>
+
+    @if (Model.Songs.Any())
+    {
+        <div class="mn-grid">
+            @foreach (var song in Model.Songs)
+            {
+                <partial name="_SongCard" model="song" />
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Bu türde henüz şarkı yok.</p>
+    }
+</div>

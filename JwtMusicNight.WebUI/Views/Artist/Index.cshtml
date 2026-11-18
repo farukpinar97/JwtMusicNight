@@ -1,0 +1,27 @@
+@model List<ResultArtistDto>
+@{
+    ViewData["Title"] = "Sanatçılar";
+}
+
+<div class="mn-page">
+    <div class="mn-section-head">
+        <div>
+            <div class="eyebrow">@Model.Count sanatçı</div>
+            <h2>Sanatçılar</h2>
+        </div>
+    </div>
+
+    <div class="mn-grid" style="grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 36px 26px;">
+        @foreach (var artist in Model)
+        {
+            <a asp-controller="Artist" asp-action="Detail" asp-route-id="@artist.ArtistId" class="mn-artist ajax">
+                <div class="avatar"><img src="@artist.ArtistImageUrl" alt="@artist.ArtistName" loading="lazy" /></div>
+                <div class="name">
+                    @artist.ArtistName
+                    @if (artist.IsVerified) { <span class="mn-verified" title="Doğrulanmış sanatçı">✓</span> }
+                </div>
+                <div class="sub">@artist.Country · @artist.SongCount şarkı</div>
+            </a>
+        }
+    </div>
+</div>

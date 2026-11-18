@@ -1,0 +1,6 @@
+@JwtMusicNight.WebApi_HostAddress = http://localhost:5063
+
+GET {{JwtMusicNight.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

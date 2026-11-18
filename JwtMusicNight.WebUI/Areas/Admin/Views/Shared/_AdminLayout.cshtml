@@ -1,0 +1,185 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string name) => controller == name ? "active" : "";
+    var fullName = $"{User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value} {User.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value}".Trim();
+}
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] | Admin · Music Night</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="~/assets/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/assets/css/theme.css" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+
+    <!-- ============ SOL MENÜ ============ -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="admin-brand">
+            <span class="logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </span>
+            <span>
+                <span class="name d-block">Music Night</span>
+                <span class="sub">YÖNETİM PANELİ</span>
+            </span>
+        </a>
+
+        <nav class="admin-menu">
+            <div class="admin-menu-title">GENEL</div>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="admin-menu-item @Active("Dashboard")">
+                <i data-feather="grid"></i><span>Dashboard</span>
+            </a>
+
+            <div class="admin-menu-title">YÖNETİM</div>
+            <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="admin-menu-item @Active("Users")">
+                <i data-feather="users"></i><span>Kullanıcılar</span>
+            </a>
+            <a asp-area="Admin" asp-controller="Songs" asp-action="Index" class="admin-menu-item @Active("Songs")">
+                <i data-feather="music"></i><span>Şarkılar</span>
+            </a>
+            <a asp-area="Admin" asp-controller="Artists" asp-action="Index" class="admin-menu-item @Active("Artists")">
+                <i data-feather="mic"></i><span>Sanatçılar</span>
+            </a>
+            <a asp-area="Admin" asp-controller="Genres" asp-action="Index" class="admin-menu-item @Active("Genres")">
+                <i data-feather="tag"></i><span>Türler</span>
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <a asp-area="" asp-controller="Music" asp-action="Index" class="admin-menu-item mb-2">
+                <i data-feather="external-link"></i><span>Siteye Dön</span>
+            </a>
+            <div class="admin-user">
+                <img src="@AvatarHelper.For(User)" alt="" />
+                <div>
+                    <div class="u-name">@(string.IsNullOrEmpty(fullName) ? User.Identity?.Name : fullName)</div>
+                    <div class="u-role">Admin · @@@(User.Identity?.Name)</div>
+                </div>
+                <a asp-area="" asp-controller="Login" asp-action="Logout" class="icon-btn logout" title="Çıkış Yap">
+                    <i data-feather="log-out"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============ İÇERİK ============ -->
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <button type="button" class="icon-btn admin-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open')">
+                <i data-feather="menu"></i>
+            </button>
+            <div class="admin-breadcrumb">Yönetim &nbsp;/&nbsp; <b>@ViewData["Title"]</b></div>
+        </div>
+
+        <div class="admin-content">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- bildirimler -->
+    <div class="admin-toasts">
+        @if (TempData["Success"] != null)
+        {
+            <div class="admin-toast success">
+                <i data-feather="check-circle"></i>
+                <div>@TempData["Success"]</div>
+                <button type="button" class="t-close" aria-label="Kapat">&times;</button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="admin-toast error">
+                <i data-feather="alert-circle"></i>
+                <div>@TempData["Error"]</div>
+                <button type="button" class="t-close" aria-label="Kapat">&times;</button>
+            </div>
+        }
+    </div>
+
+    <!-- silme onay penceresi -->
+    <div class="confirm-backdrop" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="confirm-box">
+            <div class="icon-wrap"><i data-feather="trash-2"></i></div>
+            <h5 id="confirmTitle">Silmek istediğine emin misin?</h5>
+            <p class="js-confirm-text"></p>
+            <div class="actions-row">
+                <button type="button" class="btn-admin btn-admin-ghost js-confirm-cancel">Vazgeç</button>
+                <button type="button" class="btn-admin btn-admin-danger js-confirm-ok"><i data-feather="trash-2"></i> Evet, sil</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/libs/jquery/dist/jquery.min.js"></script>
+    <script src="~/libs/popper.js/dist/umd/popper.min.js"></script>
+    <script src="~/libs/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="~/libs/feather-icons/dist/feather.min.js"></script>
+    <script>
+        feather.replace();
+
+        // bildirimler: kapat butonu + 5 sn sonra otomatik kapanma
+        document.querySelectorAll('.admin-toast').forEach(function (t) {
+            var close = function () { t.style.transition = 'opacity .3s'; t.style.opacity = 0; setTimeout(function () { t.remove(); }, 300); };
+            t.querySelector('.t-close').addEventListener('click', close);
+            setTimeout(close, 5000);
+        });
+
+        // ---- Onay penceresi (data-confirm) + gönderilirken butonda yükleniyor durumu ----
+        (function () {
+            var modal = document.getElementById('confirmModal');
+            var okBtn = modal.querySelector('.js-confirm-ok');
+            var cancelBtn = modal.querySelector('.js-confirm-cancel');
+            var pendingForm = null;
+
+            function openConfirm(form) {
+                pendingForm = form;
+                modal.querySelector('.js-confirm-text').textContent = form.getAttribute('data-confirm');
+                modal.classList.add('show');
+                setTimeout(function () { cancelBtn.focus(); }, 50);
+            }
+            function closeConfirm() { modal.classList.remove('show'); pendingForm = null; }
+
+            okBtn.addEventListener('click', function () {
+                if (!pendingForm) return;
+                var form = pendingForm;
+                form.dataset.confirmed = '1';
+                closeConfirm();
+                if (form.requestSubmit) form.requestSubmit(); else form.submit();
+            });
+            cancelBtn.addEventListener('click', closeConfirm);
+            modal.addEventListener('click', function (e) { if (e.target === modal) closeConfirm(); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('show')) closeConfirm(); });
+
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (form.hasAttribute('data-confirm') && !form.dataset.confirmed) {
+                    e.preventDefault();
+                    openConfirm(form);
+                    return;
+                }
+                // metinli butonlarda spinner göster, çift tıklamayı engelle
+                var btn = form.querySelector('button[type=submit], button:not([type])');
+                if (btn && btn.classList.contains('btn-admin') && !btn.classList.contains('is-loading')) {
+                    btn.dataset.html = btn.innerHTML;
+                    btn.classList.add('is-loading');
+                    var text = btn.getAttribute('data-loading-text');
+                    btn.innerHTML = '<span class="spinner"></span>' + (text === null ? 'İşleniyor…' : text);
+                }
+            });
+
+            // geri tuşuyla dönülünce butonları eski haline getir
+            window.addEventListener('pageshow', function () {
+                document.querySelectorAll('.btn-admin.is-loading').forEach(function (b) {
+                    b.classList.remove('is-loading'); if (b.dataset.html) b.innerHTML = b.dataset.html;
+                });
+                document.querySelectorAll('form[data-confirmed]').forEach(function (f) { delete f.dataset.confirmed; });
+            });
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

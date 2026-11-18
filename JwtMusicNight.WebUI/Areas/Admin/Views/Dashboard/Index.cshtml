@@ -1,0 +1,217 @@
+@model AdminDashboardDto
+@{
+    ViewData["Title"] = "Dashboard";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    // ---- haftalık grafik ----
+    var days = Model.ListensLast7Days;
+    var weekTotal = days.Sum(d => d.Count);
+    var maxDay = days.OrderByDescending(d => d.Count).FirstOrDefault();
+    var avg = days.Count == 0 ? 0 : weekTotal / (double)days.Count;
+
+    // Eksen için "yuvarlak" üst sınır: 48 -> 50, 7 -> 10, 3 -> 4
+    int NiceMax(int v)
+    {
+        if (v <= 4) return 4;
+        var mag = Math.Pow(10, Math.Floor(Math.Log10(v)));
+        var n = v / mag;
+        var nice = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+        return (int)(nice * mag);
+    }
+    var axisMax = NiceMax(maxDay?.Count ?? 0);
+
+    // ---- paketler ----
+    var totalUsers = Math.Max(1, Model.TotalUsers);
+    var paidUsers = Model.UsersByPackage.Where(kv => kv.Key != "Basic").Sum(kv => kv.Value);
+    var paidPct = paidUsers * 100 / totalUsers;
+
+    // ---- top listeler ----
+    var topSongMax = Math.Max(1, Model.TopSongs.Select(s => s.ListenCount).DefaultIfEmpty(0).Max());
+    var topArtistMax = Math.Max(1, Model.TopArtists.Select(a => a.ListenCount).DefaultIfEmpty(0).Max());
+
+    var stats = new[]
+    {
+        ("users", "tint-purple", Model.TotalUsers, "Kullanıcı"),
+        ("music", "tint-pink", Model.TotalSongs, "Şarkı"),
+        ("mic", "tint-cyan", Model.TotalArtists, "Sanatçı"),
+        ("tag", "tint-amber", Model.TotalGenres, "Tür"),
+        ("headphones", "tint-green", Model.TotalListens, "Toplam dinlenme")
+    };
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <div class="text-muted">Hoş geldin 👋</div>
+        <h2>Dashboard</h2>
+    </div>
+    <a asp-controller="Songs" asp-action="Create" class="btn-admin btn-admin-primary"><i data-feather="plus"></i> Yeni Şarkı</a>
+</div>
+
+<!-- özet kartlar -->
+<div class="stat-grid">
+    @foreach (var (icon, tint, value, label) in stats)
+    {
+        <div class="admin-card stat-card">
+            <div class="stat-icon @tint"><i data-feather="@icon"></i></div>
+            <div>
+                <div class="stat-value">@value.ToString("N0", tr)</div>
+                <div class="stat-label">@label</div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row row-eq">
+    <!-- HAFTALIK DİNLENME -->
+    <div class="col-xl-7 col-lg-12">
+        <div class="admin-card d-flex flex-column">
+            <div class="card-head">
+                <h6>Son 7 Günün Dinlenmeleri</h6>
+            </div>
+
+            <div class="chart-hero">
+                <span class="hero-value">@weekTotal.ToString("N0", tr)</span>
+                <span class="hero-label">dinlenme bu hafta</span>
+            </div>
+            <div class="chart-meta">
+                <span>Günlük ortalama <b>@avg.ToString("0.#", tr)</b></span>
+                @if (maxDay != null && maxDay.Count > 0)
+                {
+                    <span>En yoğun gün <b>@maxDay.Date.ToString("dddd", tr) · @maxDay.Count</b></span>
+                }
+            </div>
+
+            @if (weekTotal == 0)
+            {
+                <div class="chart-empty">
+                    <i data-feather="bar-chart-2"></i>
+                    <div>Son 7 günde dinlenme yok.</div>
+                </div>
+            }
+            else
+            {
+                <div class="week-chart" role="img" aria-label="Son 7 günün günlük dinlenme sayıları">
+                    <div class="grid">
+                        <div class="grid-line" style="top:0"><span>@axisMax</span></div>
+                        <div class="grid-line" style="top:50%"><span>@(axisMax / 2)</span></div>
+                        <div class="grid-line base" style="top:100%"><span>0</span></div>
+                    </div>
+                    <div class="cols">
+                        @foreach (var d in days)
+                        {
+                            var pct = d.Count * 100.0 / axisMax;
+                            var isToday = d.Date.Date == DateTime.Today;
+                            var showLabel = d.Count > 0 && (d == maxDay || isToday);
+                            <div class="col-day @(isToday ? "today" : "")">
+                                <div class="plot">
+                                    @if (d.Count > 0)
+                                    {
+                                        <div class="bar" style="height:@(pct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                                    }
+                                    @if (showLabel)
+                                    {
+                                        <span class="bar-value" style="bottom:@(pct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">@d.Count</span>
+                                    }
+                                    <span class="tip"><b>@d.Count</b> dinlenme · @d.Date.ToString("d MMMM dddd", tr)</span>
+                                </div>
+                                <div class="day">@(isToday ? "Bugün" : d.Date.ToString("ddd", tr))</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- PAKET DAĞILIMI -->
+    <div class="col-xl-5 col-lg-12">
+        <div class="admin-card pkg-card">
+            <div class="card-head">
+                <h6>Paketlere Göre Kullanıcılar</h6>
+                <a asp-controller="Users" asp-action="Index" class="card-link">Yönet <i data-feather="chevron-right"></i></a>
+            </div>
+
+            <div class="stack-bar" role="img" aria-label="Kullanıcıların paketlere dağılımı">
+                @foreach (var pkg in Packages.All)
+                {
+                    var c = Model.UsersByPackage.GetValueOrDefault(pkg);
+                    if (c > 0)
+                    {
+                        <div class="bar-@pkg" style="width:@((c * 100.0 / totalUsers).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%" title="@pkg: @c kullanıcı"></div>
+                    }
+                }
+            </div>
+
+            <div class="pkg-legend">
+                @foreach (var pkg in Packages.All)
+                {
+                    var c = Model.UsersByPackage.GetValueOrDefault(pkg);
+                    var songs = Model.SongsByPackage.GetValueOrDefault(pkg);
+                    <a asp-controller="Users" asp-action="Index" asp-route-package="@pkg" class="row-item">
+                        <span class="swatch bar-@pkg"></span>
+                        <span class="name">@pkg <small>@songs şarkı</small></span>
+                        <span class="count">@c kullanıcı</span>
+                        <span class="pct">%@(c * 100 / totalUsers)</span>
+                    </a>
+                }
+            </div>
+
+            <div class="pkg-summary">
+                <div class="big">%@paidPct</div>
+                <div class="txt">
+                    Kullanıcıların <b>@paidUsers / @Model.TotalUsers</b> tanesi ücretli pakette (Gold ve üstü).
+                    Paket yükseltmeleri <b>Kullanıcılar</b> sayfasından yapılır.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-eq">
+    <div class="col-lg-6">
+        <div class="admin-card">
+            <div class="card-head">
+                <h6>En Çok Dinlenen Şarkılar</h6>
+                <a asp-controller="Songs" asp-action="Index" class="card-link">Tüm şarkılar <i data-feather="chevron-right"></i></a>
+            </div>
+            <div class="top-list">
+                @foreach (var (s, i) in Model.TopSongs.Select((item, idx) => (item, idx)))
+                {
+                    <a asp-controller="Songs" asp-action="Edit" asp-route-id="@s.Id" class="item">
+                        <span class="rank @(i == 0 ? "top" : "")">@(i + 1)</span>
+                        <img src="@s.ImageUrl" class="thumb" alt="" />
+                        <div class="meta">
+                            <div class="cell-main">@s.Name</div>
+                            <div class="cell-sub">@s.SubTitle</div>
+                            <div class="share"><div style="width:@(s.ListenCount * 100 / topSongMax)%"></div></div>
+                        </div>
+                        <span class="num"><i data-feather="headphones"></i>@s.ListenCount.ToString("N0", tr)</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="admin-card">
+            <div class="card-head">
+                <h6>En Çok Dinlenen Sanatçılar</h6>
+                <a asp-controller="Artists" asp-action="Index" class="card-link">Tüm sanatçılar <i data-feather="chevron-right"></i></a>
+            </div>
+            <div class="top-list">
+                @foreach (var (a, i) in Model.TopArtists.Select((item, idx) => (item, idx)))
+                {
+                    <a asp-controller="Artists" asp-action="Edit" asp-route-id="@a.Id" class="item">
+                        <span class="rank @(i == 0 ? "top" : "")">@(i + 1)</span>
+                        <img src="@a.ImageUrl" class="thumb circle" alt="" />
+                        <div class="meta">
+                            <div class="cell-main">@a.Name</div>
+                            <div class="cell-sub">@a.SubTitle</div>
+                            <div class="share"><div style="width:@(a.ListenCount * 100 / topArtistMax)%"></div></div>
+                        </div>
+                        <span class="num"><i data-feather="headphones"></i>@a.ListenCount.ToString("N0", tr)</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

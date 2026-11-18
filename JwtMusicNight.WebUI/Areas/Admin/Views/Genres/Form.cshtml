@@ -1,0 +1,39 @@
+@model AdminGenreDto
+@{
+    var isEdit = Model.GenreId > 0;
+    ViewData["Title"] = isEdit ? "Tür Düzenle" : "Yeni Tür";
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <a asp-action="Index" class="text-muted"><i data-feather="arrow-left"></i> Türler</a>
+        <h2>@(isEdit ? Model.GenreName : "Yeni Tür")</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="admin-card">
+            <h6>Tür Bilgileri</h6>
+            <form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="admin-form">
+                <div asp-validation-summary="ModelOnly" class="info-note"></div>
+                <input type="hidden" asp-for="GenreId" />
+
+                <div class="form-group">
+                    <label asp-for="GenreName"></label>
+                    <input asp-for="GenreName" class="form-control" placeholder="Örn. Indie" />
+                    <span asp-validation-for="GenreName" class="text-danger"></span>
+                </div>
+
+                <partial name="_ImagePicker" model='("ImageUrl", Model.ImageUrl, "Görsel")' />
+
+                <div class="d-flex" style="gap:10px">
+                    <button type="submit" class="btn-admin btn-admin-primary" data-loading-text="Kaydediliyor…"><i data-feather="save"></i> @(isEdit ? "Değişiklikleri Kaydet" : "Türü Oluştur")</button>
+                    <a asp-action="Index" class="btn-admin btn-admin-ghost">Vazgeç</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_FormScripts" /> }

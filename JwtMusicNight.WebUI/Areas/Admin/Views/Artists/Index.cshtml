@@ -1,0 +1,54 @@
+@model List<AdminArtistDto>
+@{
+    ViewData["Title"] = "Sanatçılar";
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <div class="text-muted">Yönetim</div>
+        <h2>Sanatçılar <small>(@Model.Count)</small></h2>
+    </div>
+    <a asp-action="Create" class="btn-admin btn-admin-primary"><i data-feather="plus"></i> Yeni Sanatçı</a>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr><th>Sanatçı</th><th>Ülke</th><th class="text-center">Şarkı</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5"><div class="empty-state"><i data-feather="mic"></i><div class="title">Henüz sanatçı yok</div><div>"Yeni Sanatçı" ile ilk kaydı ekleyin.</div></div></td></tr>
+                }
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="media-cell">
+                                <img src="@a.ArtistImageUrl" class="thumb circle" alt="" />
+                                <div class="cell-main">@a.ArtistName</div>
+                            </div>
+                        </td>
+                        <td class="text-muted">@a.Country</td>
+                        <td class="text-center">@a.SongCount</td>
+                        <td>
+                            @if (a.IsVerified) { <span class="status-dot ok">Doğrulanmış</span> }
+                            else { <span class="text-muted">—</span> }
+                        </td>
+                        <td class="text-right">
+                            <div class="actions">
+                                <a asp-action="Edit" asp-route-id="@a.ArtistId" class="icon-btn" title="Düzenle" aria-label="@a.ArtistName düzenle"><i data-feather="edit-2"></i></a>
+                                <form asp-action="Delete" asp-route-id="@a.ArtistId" method="post" data-confirm="&quot;@a.ArtistName&quot; silinsin mi?">
+                                    <button class="icon-btn icon-btn-danger" disabled="@(a.SongCount > 0)"
+                                            title="@(a.SongCount > 0 ? "Önce sanatçının şarkılarını silin" : "Sil")"><i data-feather="trash-2"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

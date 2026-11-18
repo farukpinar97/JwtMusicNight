@@ -1,0 +1,64 @@
+@model ChartViewModel
+@{
+    ViewData["Title"] = "Listeler";
+    var selectedGenre = Model.Genres.FirstOrDefault(g => g.GenreId == Model.SelectedGenreId);
+    var top = Model.Songs.FirstOrDefault();
+}
+
+<section class="mn-hero compact">
+    <div class="mn-hero-bg" style="background-image:url(@(top?.ArtistCoverImageUrl ?? "/assets/img/b14.jpg"))"></div>
+    <div class="mn-hero-inner">
+        <div>
+            <div class="eyebrow">📈 Music Night Top @Model.Songs.Count</div>
+            <h1>@(selectedGenre != null ? $"{selectedGenre.GenreName} Listesi" : "Top Listeler")</h1>
+            <div class="mn-meta">
+                <span>@(Model.Sort == "new" ? "En yeni çıkan şarkılar" : "Dinlenme sayısına göre en popüler şarkılar")</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="mn-wrap">
+    <!-- filtreler -->
+    <div class="d-flex flex-wrap align-items-center mb-4" style="gap:16px">
+        <div class="mn-chips">
+            <a asp-action="Index" asp-route-sort="popular" asp-route-genreId="@Model.SelectedGenreId" class="mn-chip ajax @(Model.Sort == "popular" ? "active" : "")">🔥 Popüler</a>
+            <a asp-action="Index" asp-route-sort="new" asp-route-genreId="@Model.SelectedGenreId" class="mn-chip ajax @(Model.Sort == "new" ? "active" : "")">✨ Yeni</a>
+        </div>
+        <span class="text-muted d-none d-md-inline">|</span>
+        <div class="mn-chips">
+            <a asp-action="Index" asp-route-sort="@Model.Sort" class="mn-chip ajax @(Model.SelectedGenreId == null ? "active" : "")">Tüm türler</a>
+            @foreach (var g in Model.Genres)
+            {
+                <a asp-action="Index" asp-route-sort="@Model.Sort" asp-route-genreId="@g.GenreId"
+                   class="mn-chip ajax @(g.GenreId == Model.SelectedGenreId ? "active" : "")">@g.GenreName</a>
+            }
+        </div>
+    </div>
+
+    <div class="mn-two">
+        <section>
+            @if (Model.Songs.Any())
+            {
+                <div class="mn-tracks">
+                    @for (var i = 0; i < Model.Songs.Count; i++)
+                    {
+                        <partial name="_ChartRow" model="Model.Songs[i]" view-data='new ViewDataDictionary(ViewData) { ["Rank"] = i + 1 }' />
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted py-5 text-center">Bu türde henüz şarkı yok.</p>
+            }
+        </section>
+
+        <aside class="mn-sticky">
+            @if (top != null)
+            {
+                <div class="mn-section-head"><div><div class="eyebrow">Listenin lideri</div><h3>#1</h3></div></div>
+                <partial name="_SongCard" model="top" />
+            }
+        </aside>
+    </div>
+</div>

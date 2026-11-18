@@ -1,0 +1,122 @@
+@model List<AdminSongDto>
+@{
+    ViewData["Title"] = "Şarkılar";
+    string? search = ViewBag.Search;
+    var missing = Model.Count(s => !s.HasAudioFile);
+    var chips = new List<(string Key, string Label, int Count)> { ("all", "Tümü", Model.Count), ("missing", "MP3 eksik", missing) };
+    chips.AddRange(Packages.All.Select(p => (p, p, Model.Count(s => s.RequiredPackage == p))));
+}
+
+<div class="admin-page-header">
+    <div class="flex">
+        <div class="text-muted">Yönetim</div>
+        <h2>Şarkılar <small>(@Model.Count)</small></h2>
+    </div>
+    <a asp-action="Create" class="btn-admin btn-admin-primary"><i data-feather="plus"></i> Yeni Şarkı</a>
+</div>
+
+<div class="admin-card">
+    <form method="get" class="admin-form card-toolbar">
+        <div class="input-icon flex" style="min-width:240px">
+            <i data-feather="search"></i>
+            <input name="search" value="@search" class="form-control" placeholder="Şarkı veya sanatçı ara..." />
+        </div>
+        <button class="btn-admin btn-admin-primary">Ara</button>
+        @if (!string.IsNullOrEmpty(search)) { <a asp-action="Index" class="btn-admin btn-admin-ghost">Temizle</a> }
+    </form>
+
+    @if (missing > 0)
+    {
+        <div class="info-note">
+            <i data-feather="alert-triangle"></i>
+            <div><b>@missing şarkının</b> MP3 dosyası eksik. Düzenle sayfasından yükleyebilirsiniz.</div>
+        </div>
+    }
+
+    <div class="chip-group" role="group" aria-label="Hızlı filtre">
+        @foreach (var c in chips)
+        {
+            <button type="button" class="chip js-chip @(c.Key == "all" ? "active" : "")" data-filter="@c.Key">
+                @c.Label <span class="count">@c.Count</span>
+            </button>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width:40px">#</th>
+                    <th>Şarkı</th>
+                    <th>Tür</th>
+                    <th>Süre</th>
+                    <th>Paket</th>
+                    <th class="text-center">Dinlenme</th>
+                    <th>MP3</th>
+                    <th class="text-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr class="js-song-row" data-package="@s.RequiredPackage" data-audio="@(s.HasAudioFile ? "ok" : "missing")">
+                        <td class="text-muted">@s.SongId</td>
+                        <td>
+                            <div class="media-cell">
+                                <img src="@s.CoverImageUrl" class="thumb" alt="" />
+                                <div><div class="cell-main">@s.SongName</div><div class="cell-sub">@s.ArtistName</div></div>
+                            </div>
+                        </td>
+                        <td>@s.GenreName</td>
+                        <td class="text-muted">@s.DurationText</td>
+                        <td><partial name="_PackagePill" model="s.RequiredPackage" /></td>
+                        <td class="text-center">@s.ListenCount</td>
+                        <td>
+                            @if (s.HasAudioFile) { <span class="status-dot ok" title="@s.AudioUrl">Yüklü</span> }
+                            else { <span class="status-dot missing">Eksik</span> }
+                        </td>
+                        <td class="text-right">
+                            <div class="actions">
+                                <a asp-action="Edit" asp-route-id="@s.SongId" class="icon-btn" title="Düzenle" aria-label="@s.SongName düzenle"><i data-feather="edit-2"></i></a>
+                                <form asp-action="Delete" asp-route-id="@s.SongId" method="post"
+                                      data-confirm="&quot;@s.SongName&quot; silinsin mi? Dinleme geçmişi ve MP3 dosyası da silinir.">
+                                    <button class="icon-btn icon-btn-danger" title="Sil" aria-label="@s.SongName sil"><i data-feather="trash-2"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                <tr class="js-empty" style="@(Model.Any() ? "display:none" : "")"><td colspan="8">
+                    <div class="empty-state">
+                        <i data-feather="music"></i>
+                        <div class="title">Şarkı bulunamadı</div>
+                        <div>Farklı bir arama veya filtre deneyin.</div>
+                    </div>
+                </td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // sayfa yenilemeden hızlı filtre: paket / MP3 eksik
+        (function () {
+            var rows = document.querySelectorAll('.js-song-row');
+            var empty = document.querySelector('.js-empty');
+            document.querySelectorAll('.js-chip').forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    document.querySelectorAll('.js-chip').forEach(function (c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    var f = chip.getAttribute('data-filter'), visible = 0;
+                    rows.forEach(function (r) {
+                        var show = f === 'all' || (f === 'missing' ? r.dataset.audio === 'missing' : r.dataset.package === f);
+                        r.style.display = show ? '' : 'none';
+                        if (show) visible++;
+                    });
+                    empty.style.display = visible ? 'none' : '';
+                });
+            });
+        })();
+    </script>
+}

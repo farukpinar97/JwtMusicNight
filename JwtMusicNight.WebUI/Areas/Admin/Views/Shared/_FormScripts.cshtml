@@ -1,0 +1,56 @@
+@Html.AntiForgeryToken()
+<script>
+    // görsel yolu değişince önizlemeyi güncelle
+    document.querySelectorAll('.js-image-input').forEach(function (input) {
+        input.addEventListener('input', function () {
+            var img = document.querySelector('.js-image-preview[data-for="' + input.id + '"]');
+            if (img) img.src = input.value;
+        });
+    });
+
+    // bilgisayardan görsel yükle -> sunucu yolu döner -> kutuya yaz + önizle
+    document.querySelectorAll('.js-img-picker').forEach(function (picker) {
+        var fileInput = picker.querySelector('.js-upload-input');
+        var textInput = picker.querySelector('.js-image-input');
+        var preview = picker.querySelector('.js-image-preview');
+        var status = picker.querySelector('.js-upload-status');
+        var btn = picker.querySelector('.js-upload-btn');
+        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+        fileInput.addEventListener('change', function () {
+            if (!fileInput.files.length) return;
+            var data = new FormData();
+            data.append('file', fileInput.files[0]);
+
+            btn.classList.add('is-loading');
+            status.textContent = 'Yükleniyor…';
+
+            fetch(picker.getAttribute('data-upload-url'), {
+                method: 'POST',
+                body: data,
+                headers: token ? { 'RequestVerificationToken': token.value } : {},
+                credentials: 'same-origin'
+            })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+            .then(function (res) {
+                if (!res.ok) throw new Error(res.body.message || 'Yükleme başarısız.');
+                textInput.value = res.body.url;
+                preview.src = res.body.url;
+                status.textContent = '✅ Yüklendi. Değişikliğin geçerli olması için formu kaydedin.';
+            })
+            .catch(function (err) { status.textContent = '⚠️ ' + err.message; })
+            .finally(function () { btn.classList.remove('is-loading'); fileInput.value = ''; });
+        });
+    });
+
+    // MP3 alanı: seçilen dosya adını göster, sürükle-bırak efekti
+    document.querySelectorAll('.dropzone-box').forEach(function (box) {
+        var input = box.querySelector('input[type=file]');
+        var label = box.querySelector('.dz-file');
+        input.addEventListener('change', function () {
+            label.textContent = input.files.length ? '🎵 ' + input.files[0].name : '';
+        });
+        ['dragenter', 'dragover'].forEach(function (ev) { box.addEventListener(ev, function () { box.classList.add('dragover'); }); });
+        ['dragleave', 'drop'].forEach(function (ev) { box.addEventListener(ev, function () { box.classList.remove('dragover'); }); });
+    });
+</script>

@@ -1,0 +1,29 @@
+@* Görsel seçici: önizleme + yol kutusu (listeden seç) + bilgisayardan yükle *@
+@model (string Name, string? Value, string Label)
+@{
+    var images = ViewBag.Images as List<string> ?? new();
+    var id = Model.Name;
+}
+<div class="form-group">
+    <label for="@id">@Model.Label</label>
+    <div class="img-picker js-img-picker" data-upload-url="@Url.Action("UploadImage")">
+        <img src="@Model.Value" class="img-preview js-image-preview" data-for="@id" alt="" />
+        <div class="flex">
+            <div class="d-flex" style="gap:8px">
+                <div class="input-icon flex">
+                    <i data-feather="image"></i>
+                    <input id="@id" name="@Model.Name" value="@Model.Value" class="form-control js-image-input"
+                           list="@(id)-list" placeholder="/assets/img/c1.jpg" autocomplete="off" />
+                </div>
+                <label class="btn-admin btn-admin-ghost mb-0 js-upload-btn" title="Bilgisayardan görsel yükle">
+                    <i data-feather="upload"></i><span>Yükle</span>
+                    <input type="file" accept=".jpg,.jpeg,.png,.webp,image/*" class="d-none js-upload-input" />
+                </label>
+            </div>
+            <datalist id="@(id)-list">
+                @foreach (var img in images) { <option value="@img"></option> }
+            </datalist>
+            <small class="text-muted js-upload-status">Listeden seçin, yol yazın ya da bilgisayardan yükleyin (JPG/PNG/WEBP, en fazla 5 MB).</small>
+        </div>
+    </div>
+</div>

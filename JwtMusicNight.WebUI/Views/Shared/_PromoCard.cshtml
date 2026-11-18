@@ -1,0 +1,8 @@
+@* Tanıtım kartı: Top Listeler *@
+@model string
+<a asp-controller="Chart" asp-action="Index" class="mn-promo ajax">
+    <div class="bg" style="background-image:url(@(string.IsNullOrEmpty(Model) ? "/assets/img/b14.jpg" : Model))"></div>
+    <h3>Top Listeler @DateTime.Now.Year</h3>
+    <p>En çok dinlenen 20 şarkı, tür tür.</p>
+    <span class="mn-btn mn-btn-light">Keşfet</span>
+</a>
